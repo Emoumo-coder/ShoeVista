@@ -1,4 +1,5 @@
-import React from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const GenInfo = () => {
@@ -53,32 +54,54 @@ export default GenInfo;
 export const Brands = () => {
   const navigate = useNavigate();
 
-  const data = [
-    { src: "/GenInfo/adidas.jpg", name: "Adidas", to: "/search/adidas" },
-    { src: "/GenInfo/nike.png", name: "Nike", to: "/search/nike" },
-    { src: "/GenInfo/skechers.jpg", name: "Skechers", to: "/search/skechers" },
-    { src: "/GenInfo/puma.jpg", name: "Puma", to: "/search/puma" },
-  ];
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/api/filter/bestSellers`
+        );
+        if (isMounted) {
+          setProducts(res.data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error(`Error while fetching products: ${err.message}`);
+          setError(err);
+          setLoading(false);
+        }
+      }
+    };
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col items-center my-16 w-full">
       <p className="prose prose-2xl font-bold mb-6">Top Brands</p>
       <div className="flex flex-wrap justify-center">
-        {data.map((elem, id) => (
+        {products.map((elem, id) => (
           <div
             key={id}
             className="relative w-[340px] h-[340px] mx-2 mb-6 hover:text-white"
           >
             <div className="absolute w-full flex justify-center items-center top-4  ">
-              <p className="logo font-semibold z-50 ">{elem.name}</p>
+              <p className="logo font-semibold z-50 ">{elem.title}</p>
             </div>
             <img
-              src={elem.src}
-              alt={elem.name}
+              src={elem.img}
+              alt={elem.title}
               className="w-full h-full object-cover"
             />
             <button
-              onClick={() => navigate(elem.to)}
+              onClick={() => navigate(`/search/${elem.title}`)}
               className="absolute inset-0 flex items-center justify-center
                              bg-gray-800 text-white opacity-0 hover:opacity-80 transition-opacity duration-200"
             >
